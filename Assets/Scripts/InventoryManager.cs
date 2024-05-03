@@ -12,6 +12,8 @@ public class InventoryManager : MonoBehaviour {
     public GameObject InventoryItem;
     public InventoryCell inventory;
     public InventoryCell equipped;
+    public GameObject keyObject;
+    private GameObject keyObjectInstance;
 
 
     private void Awake() {
@@ -36,10 +38,6 @@ public class InventoryManager : MonoBehaviour {
         if (ItemPickup.Instance.firstOpenInventory == 0) {
 
         } else if (ItemPickup.Instance.firstOpenInventory == 1) {
-            /*
-                        foreach (Transform item in ItemContent) {
-                            Destroy(item.gameObject);
-                        }*/
 
             foreach (var itemSO in Items) {
                 inventory.SetCell(itemSO.itemName, itemSO.icon);
@@ -55,9 +53,19 @@ public class InventoryManager : MonoBehaviour {
             if (inventory.transform.Find("ItemName").GetComponent<Text>().text == "Key") {
 
                 equipped.SetCell(inventory.ItemName.text, inventory.ItemIcon.sprite);
+
+                keyObjectInstance = Instantiate(keyObject, Player.Instance.keyObjectHoldPoint);
+
+                keyObjectInstance.transform.localPosition = new Vector3(0f, 0f, 0.05f);
+                keyObjectInstance.transform.localRotation = Quaternion.Euler(180f, 160f, 80f);
+                keyObjectInstance.transform.localScale = new Vector3(5f, 5f, 5f);
+
+
                 inventory.SetCell(null, null);
 
-            } else { 
+            } else {
+
+                Destroy(keyObjectInstance);
 
                 inventory.SetCell(equipped.ItemName.text, equipped.ItemIcon.sprite);
                 equipped.SetCell(null, null);

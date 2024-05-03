@@ -291,5 +291,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d92fd848f0440684aa516e13f2b2527b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  interactableObject: {fileID: 0}
+  interactableObject: {fileID: 636005164642352719}
   visualGameObject: {fileID: 6232418780277126660}

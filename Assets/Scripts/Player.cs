@@ -5,8 +5,9 @@ using Unity.VisualScripting;
 using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static UnityEditor.Timeline.TimelinePlaybackControls;
 
-public class Player : MonoBehaviour {
+public class Player : MonoBehaviour, IKeyObjectParent {
 
     public static Player Instance { get; private set; }
 
@@ -22,18 +23,28 @@ public class Player : MonoBehaviour {
     // This is the GameInput reference for the GameInput object in Unity, we instantiate gameInput to use the movement function inside.
     [SerializeField] private GameInput gameInput;
     [SerializeField] private LayerMask layerMask;
+
+    [SerializeField] public Transform keyObjectHoldPoint;
+
+    private KeyObject keyObject;
+
     private Animator animator;
 
-    private bool isWalking;
-    private bool isRunning;
     private Vector3 lastInteractDirection;
     private InteractableObject selectedInteractable;
     public Transform boyTransform;
 
     public Rigidbody rigidBody;
 
-    [Range(0, 5)]
-    public float jumpStrength = 5f;
+    [Range(0, 3)]
+    public float jumpStrength = 3f;
+
+    private bool isWalking;
+    private bool isRunning;
+    private bool isJumping;
+
+    private bool canJump = true;
+
 
     private void Awake() {
         if (Instance != null) {
@@ -41,14 +52,14 @@ public class Player : MonoBehaviour {
         }
         Instance = this;
 
-        boyTransform = transform.Find("Black Boy Cartoon Lowpoly");
+        boyTransform = transform.Find("Remy");
 
         if (boyTransform != null) {
             animator = boyTransform.GetComponent<Animator>();
         }
 
         if (animator == null) {
-            Debug.LogError("No se encontr? el Animator en el objeto 'Black Boy Cartoon Lowpoly'.");
+            Debug.LogError("No se encontr? el Animator en el objeto 'Remy'.");
         }
 
     }
@@ -59,7 +70,26 @@ public class Player : MonoBehaviour {
     }
 
     private void GameInput_OnJumpAction(InputAction.CallbackContext obj) {
+
+        if (canJump) StartCoroutine(JumpAndWait());
+
+    }
+
+    private IEnumerator JumpAndWait() {
+
+        isJumping = true;
+        animator.SetBool(Constants.AnimParamaters.IsJumping, isJumping);
+        canJump = false;
+
         rigidBody.velocity = transform.up * jumpStrength;
+
+        yield return new WaitForSecondsRealtime(0.4f);
+
+        isJumping = false;
+        animator.SetBool(Constants.AnimParamaters.IsJumping, isJumping);
+        canJump = true;
+
+
     }
 
     private void Update() {
@@ -76,6 +106,7 @@ public class Player : MonoBehaviour {
         // Interact with an InteractableObject
         if (selectedInteractable != null) {
             selectedInteractable.Interact(selectedInteractable, context);
+            Debug.Log("ES INTERACTUABLE AMIGO");
         }
 
         // ESC Keyboard pressed to manage state of the game welcome note
@@ -231,6 +262,26 @@ public class Player : MonoBehaviour {
         OnSelectedInteractableChanged?.Invoke(this, new OnSelectedInteractableChangedEventArgs {
             selectedInteractable = selectedInteractable
         });
+    }
+
+    public Transform GetKeyObjectFollowTransform() {
+        return keyObjectHoldPoint;
+    }
+
+    public void SetKeyObject(KeyObject keyObject) {
+        this.keyObject = keyObject;
+    }
+
+    public KeyObject GetKeyObject() {
+        return keyObject;
+    }
+
+    public bool HasKeyObject() {
+        return keyObject != null;
+    }
+
+    public void ClearKeyObject() {
+        keyObject = null;
     }
 
 }
