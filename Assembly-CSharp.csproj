@@ -79,7 +79,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Assets\Textures\fire\Normal_info.txt" />
-    <None Include="Assets\Assets\Black Boy Lowpoly Character 1\Black Boy Statistics.txt" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

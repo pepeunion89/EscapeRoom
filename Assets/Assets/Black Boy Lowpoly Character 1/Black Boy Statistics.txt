@@ -1,4 +1,0 @@
-All: Statistics:
-
-Polys:  9,830
-Verts:  9,677
