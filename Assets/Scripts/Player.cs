@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using static UnityEditor.Timeline.TimelinePlaybackControls;
+using UnityEngine.UI; 
 
 public class Player : MonoBehaviour, IKeyObjectParent {
 
@@ -23,8 +23,9 @@ public class Player : MonoBehaviour, IKeyObjectParent {
     // This is the GameInput reference for the GameInput object in Unity, we instantiate gameInput to use the movement function inside.
     [SerializeField] private GameInput gameInput;
     [SerializeField] private LayerMask layerMask;
-
     [SerializeField] public Transform keyObjectHoldPoint;
+    [SerializeField] private Image boxMessage;
+    [SerializeField] private Text textMessage;
 
     private KeyObject keyObject;
 
@@ -106,7 +107,6 @@ public class Player : MonoBehaviour, IKeyObjectParent {
         // Interact with an InteractableObject
         if (selectedInteractable != null) {
             selectedInteractable.Interact(selectedInteractable, context);
-            Debug.Log("ES INTERACTUABLE AMIGO");
         }
 
         // ESC Keyboard pressed to manage state of the game welcome note
@@ -262,6 +262,38 @@ public class Player : MonoBehaviour, IKeyObjectParent {
         OnSelectedInteractableChanged?.Invoke(this, new OnSelectedInteractableChangedEventArgs {
             selectedInteractable = selectedInteractable
         });
+    }
+
+    public IEnumerator ShowBoxMessage(string message, int messageID) {
+
+        if (boxMessage != null) {
+            boxMessage.gameObject.SetActive(true);
+            textMessage.text = message;
+
+            yield return new WaitForSeconds(2.5f);
+
+            boxMessage.gameObject.SetActive(false);
+
+            if(messageID == 2 &&  ItemPickup.Instance.keyExists) {
+
+                // Here we need the code to show the picture maximized 
+                boxMessage.gameObject.SetActive(true);
+                textMessage.text = "Wait a minute... Is it that a key?";
+                ItemPickup.Instance.keyExists = false;
+                yield return new WaitForSeconds(3f);
+                ItemPickup.Instance.Pickup();
+                boxMessage.gameObject.SetActive(false);
+            }
+
+            textMessage.text = "";
+        } else {
+            Debug.LogError("boxMessage it is not assigned.");
+        }
+
+    }
+
+    public void HideBoxMessage() {
+        boxMessage.gameObject.SetActive(false);
     }
 
     public Transform GetKeyObjectFollowTransform() {

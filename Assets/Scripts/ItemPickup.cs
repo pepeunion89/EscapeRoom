@@ -8,23 +8,19 @@ public class ItemPickup : MonoBehaviour{
 
     public ItemSO item;
     public int firstOpenInventory = 0;
-    Transform childOrKey;
+    [SerializeField] public Transform keyTransform;
+    public bool keyExists = true;
 
     // Remember to set instance = this to avoid getting a NullReference error.
     private void Awake() {
         Instance = this;
     }
-
-    private void Start() {
-        childOrKey = gameObject.transform.Find("Key");
-    }
-
     public void Pickup() {
 
-        if(childOrKey != null) {
+        if(keyTransform != null) {
             firstOpenInventory = 1;
             InventoryManager.Instance.AddItem(item);
-            Destroy(childOrKey.gameObject);
+            Destroy(keyTransform.gameObject);
         }
 
     }

@@ -5,11 +5,25 @@ using UnityEngine;
 using UnityEngine.Experimental.AI;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using static Player;
 
 public class InteractableObject : MonoBehaviour {
 
+    [SerializeField] private InteractableMessages messages;
+    [SerializeField] private int messageIndex;
     public void Interact(InteractableObject interactable, InputAction.CallbackContext context) {
+
+        if (messages!=null && messageIndex>=0 && messageIndex<messages.messages.Count && context.control.displayName == "E") {
+            
+            string message = messages.messages[messageIndex];
+
+            StartCoroutine(Player.Instance.ShowBoxMessage(message, messageIndex));                      
+            
+
+        } else {
+
+            Debug.Log("Message not defined");
+
+        }
 
         if (interactable.gameObject.name == "Note") {
 
@@ -28,8 +42,6 @@ public class InteractableObject : MonoBehaviour {
         }
 
         if(interactable.gameObject.name == "PictureRedHot") {
-
-            Debug.Log("Entro en RedHot");
 
             ItemPickup.Instance.Pickup();
 
