@@ -1,33 +1,35 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI; 
 
-public class Player : MonoBehaviour, IKeyObjectParent {
+public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParent {
 
     public static Player Instance { get; private set; }
 
-    // Event to show or hide InteractableObject lightning mesh
     public event EventHandler<OnSelectedInteractableChangedEventArgs> OnSelectedInteractableChanged;
     public class OnSelectedInteractableChangedEventArgs : EventArgs {
         public InteractableObject selectedInteractable;
     }
 
-    // Velocity player
     [SerializeField] private float moveSpeed = 2f;
 
-    // This is the GameInput reference for the GameInput object in Unity, we instantiate gameInput to use the movement function inside.
     [SerializeField] private GameInput gameInput;
     [SerializeField] private LayerMask layerMask;
-    [SerializeField] public Transform keyObjectHoldPoint;
+    [SerializeField] public Transform objectHoldPoint;
     [SerializeField] private Image boxMessage;
+    [SerializeField] public Image optionsMenu;
     [SerializeField] private Text textMessage;
 
+    [SerializeField] private Transform cameraTransform; 
+
+    [SerializeField] private float runningSpeed = 5f;
+    [SerializeField] private float rotationSpeed = 10f;
+
+
     private KeyObject keyObject;
+    private RemoteControl remoteControlObject;
 
     private Animator animator;
 
@@ -47,7 +49,8 @@ public class Player : MonoBehaviour, IKeyObjectParent {
     private bool canJump = true;
 
 
-    private void Awake() {
+    private void Awake() {        
+
         if (Instance != null) {
             Debug.Log("More than one instance player.");
         }
@@ -60,7 +63,7 @@ public class Player : MonoBehaviour, IKeyObjectParent {
         }
 
         if (animator == null) {
-            Debug.LogError("No se encontr? el Animator en el objeto 'Remy'.");
+            Debug.LogError("No se encontró el Animator en el objeto 'Remy'.");
         }
 
     }
@@ -68,6 +71,8 @@ public class Player : MonoBehaviour, IKeyObjectParent {
     private void Start() {
         gameInput.OnInteractAction += GameInput_OnInteractAction;
         gameInput.OnJumpAction += GameInput_OnJumpAction;
+        gameInput.OnEscAction += GameInput_OnEscAction;
+        gameInput.OnInventory_performed += GameInput_OnInventoryAction;
     }
 
     private void GameInput_OnJumpAction(InputAction.CallbackContext obj) {
@@ -100,42 +105,46 @@ public class Player : MonoBehaviour, IKeyObjectParent {
 
     }
 
-
-    //private void GameInput_OnInteractAction(object sender, System.EventArgs e) {
     private void GameInput_OnInteractAction(InputAction.CallbackContext context) {
 
-        // Interact with an InteractableObject
         if (selectedInteractable != null) {
             selectedInteractable.Interact(selectedInteractable, context);
         }
+       
+    }
 
-        // ESC Keyboard pressed to manage state of the game welcome note
-        if (selectedInteractable == null && NoteSelected.Instance.visualGameObjectNote.activeSelf && context.control.displayName == "Esc") {
-
+    private void GameInput_OnEscAction(InputAction.CallbackContext context) {
+        if (NoteSelected.Instance.visualGameObjectNote.activeSelf) {
             NoteSelected.Instance.HideNote();
+        } else {
+            bool optionsMenuActive = optionsMenu.gameObject.activeSelf;
 
+            optionsMenu.gameObject.SetActive(!optionsMenuActive);
 
+            Time.timeScale = optionsMenuActive ? 1f : 0f;
         }
+    }
 
-        // I Keyboard pressed to manage state of the game inventory
-        if (context.control.displayName == "I") {
+    private void GameInput_OnInventoryAction(InputAction.CallbackContext context) {
 
             if (Inventory.Instance.inventoryBody.activeSelf) {
+
                 Inventory.Instance.Hide();
+
             } else {
+
                 NoteSelected.Instance.HideNote();
                 Inventory.Instance.Show();
                 InventoryManager.Instance.ListItems();
+
             }
-
-        }
-
+        
     }
 
     public void SetWalking(bool isWalking) {
 
         if (animator != null) {
-            animator.SetBool(Constants.AnimParamaters.IsWalking, isWalking); // Ajusta el par?metro del Animator
+            animator.SetBool(Constants.AnimParamaters.IsWalking, isWalking); 
         }
 
     }
@@ -151,57 +160,44 @@ public class Player : MonoBehaviour, IKeyObjectParent {
 
     // Method to HANDLE PLAYER MOVEMENT --------------------------------------------------------------------------------------------------
     public void HandleMovement() {
-        // Here we store the movement normalized on an Vector2 inputVector
-        // 
-        if (isRunning) {
-            moveSpeed = 5f;
+        // Determinar la velocidad en base al estado de ejecución
+        if (gameInput.IsRunning()) {
+            moveSpeed = runningSpeed;
         } else {
             moveSpeed = 2f;
         }
-
+       
         Vector2 inputVector = gameInput.GetMovementVectorNormalized();
-        Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y);
 
-        // This is the collition code, we use Raycast to see from what position, to the destiny position, and the distance to that object
+        Vector3 forward = cameraTransform.forward;
+        Vector3 right = cameraTransform.right;
+
+        forward.y = 0f;
+        right.y = 0f;
+
+        forward.Normalize();
+        right.Normalize();
+
+        Vector3 moveDir = (forward * inputVector.y) + (right * inputVector.x);
+
         float moveDistance = moveSpeed * Time.deltaTime;
+
         float playerRadius = .15f;
         float playerHeight = 2f;
-        bool canMove = !Physics.CapsuleCast(transform.position, transform.position + Vector3.up * playerHeight, playerRadius, moveDir, moveDistance);
 
-
-        // Once we have made the collition code, we can test if the player can move or not.
-
-        if (!canMove) {
-            // If cannot move, check if Attempt to move on X
-            Vector3 moveDirX = new Vector3(moveDir.x, 0f, 0);
-            canMove = !Physics.CapsuleCast(transform.position, transform.position + Vector3.up * playerHeight, playerRadius, moveDirX, moveDistance);
-
-            if (canMove) {
-                //If can move, so the player can move only on X
-                moveDir = moveDirX;
-            } else {
-
-                //Cannot move only on the X
-                // If cannot move, check if Attempt to move on Y
-                Vector3 moveDirZ = new Vector3(0, 0f, moveDir.z);
-                canMove = !Physics.CapsuleCast(transform.position, transform.position + Vector3.up * playerHeight, playerRadius, moveDirZ, moveDistance);
-
-                if (canMove) {
-                    //If can move, so the player can move only on Z
-                    moveDir = moveDirZ;
-                } else {
-                    // Cannot move in any direction
-                }
-
-
-            }
-
-        }
-
+        bool canMove = !Physics.CapsuleCast(
+            transform.position,
+            transform.position + Vector3.up * playerHeight,
+            playerRadius,
+            moveDir,
+            moveDistance
+        );
 
         if (canMove) {
-            //Multiply by deltaTime to normalize the speed
+
             transform.position += moveDir * moveDistance;
+
+            transform.forward = Vector3.Slerp(transform.forward, moveDir, Time.deltaTime * rotationSpeed);
         }
 
         isWalking = moveDir != Vector3.zero;
@@ -209,15 +205,6 @@ public class Player : MonoBehaviour, IKeyObjectParent {
 
         isRunning = gameInput.IsRunning();
         SetRunning(isRunning);
-
-        //Rotation and speed rotation
-        float rotateSpeed = 10f;
-        transform.forward = Vector3.Slerp(transform.forward, moveDir, Time.deltaTime * rotateSpeed);
-
-
-        //boyTransform.localPosition = new Vector3();
-        //boyTransform.localRotation = new Quaternion();
-
     }
 
     // Method to HANDLE PLAYER INTERACTIONS --------------------------------------------------------------------------------------------------
@@ -225,7 +212,17 @@ public class Player : MonoBehaviour, IKeyObjectParent {
     private void HandleInteractions() {
 
         Vector2 inputVector = gameInput.GetMovementVectorNormalized();
-        Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y);
+
+        Vector3 forward = cameraTransform.forward;
+        Vector3 right = cameraTransform.right;
+
+        forward.y = 0f;
+        right.y = 0f;
+
+        forward.Normalize();
+        right.Normalize();
+
+        Vector3 moveDir = (forward * inputVector.y) + (right * inputVector.x);
 
         if (moveDir != Vector3.zero) {
             lastInteractDirection = moveDir;
@@ -234,8 +231,7 @@ public class Player : MonoBehaviour, IKeyObjectParent {
         float interactDistance = 0.5f;
         if (Physics.Raycast(transform.position, lastInteractDirection, out RaycastHit raycastHit, interactDistance, layerMask)) {
             if (raycastHit.transform.TryGetComponent(out InteractableObject interactableObject)) {
-                //We have the interactable object
-                //interactableObject.Interact(raycastHit);
+
                 if (interactableObject != selectedInteractable) {
 
                     SetSelectedInteractable(interactableObject);
@@ -274,14 +270,13 @@ public class Player : MonoBehaviour, IKeyObjectParent {
 
             boxMessage.gameObject.SetActive(false);
 
-            if(messageID == 2 &&  ItemPickup.Instance.keyExists) {
+            if(messageID == 2 &&  ItemPickup.Instance.keyExists && TVScript.Instance.tv.activeSelf) {
 
-                // Here we need the code to show the picture maximized 
                 boxMessage.gameObject.SetActive(true);
-                textMessage.text = "Wait a minute... Is it that a key?";
+                textMessage.text = "Sorry guys, I need to see inside you";
                 ItemPickup.Instance.keyExists = false;
                 yield return new WaitForSeconds(3f);
-                ItemPickup.Instance.Pickup();
+                ItemPickup.Instance.Pickup("Key");
                 boxMessage.gameObject.SetActive(false);
             }
 
@@ -296,8 +291,10 @@ public class Player : MonoBehaviour, IKeyObjectParent {
         boxMessage.gameObject.SetActive(false);
     }
 
+
+    // Interface KEY
     public Transform GetKeyObjectFollowTransform() {
-        return keyObjectHoldPoint;
+        return objectHoldPoint;
     }
 
     public void SetKeyObject(KeyObject keyObject) {
@@ -315,5 +312,28 @@ public class Player : MonoBehaviour, IKeyObjectParent {
     public void ClearKeyObject() {
         keyObject = null;
     }
+
+    // Interface REMOTE CONTROL
+    public Transform GetRemoteControlObjectFollowTransform() {
+        return objectHoldPoint;
+    }
+
+    public void SetRemoteControlObject(RemoteControl remoteControlObject) {
+        this.remoteControlObject = remoteControlObject;
+    }
+
+    public RemoteControl GetRemoteControlObject() {
+        return remoteControlObject;
+    }
+
+
+    public bool HasRemoteControlObject() {
+        return remoteControlObject != null;
+    }
+
+    public void ClearRemoteControlObject() {
+        remoteControlObject = null;
+    }
+
 
 }

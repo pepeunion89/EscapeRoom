@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using static UnityEditor.Progress;
 
 public class InventoryManager : MonoBehaviour {
 
@@ -12,10 +11,14 @@ public class InventoryManager : MonoBehaviour {
     public GameObject InventoryItem;
     public InventoryCell inventory;
     public InventoryCell equipped;
+
     public GameObject keyObject;
     private GameObject keyObjectInstance;
 
+    public GameObject remoteControlObjectInventory;
+    public GameObject remoteControlInstance;
 
+    public bool remoteControlExist = true;
     private void Awake() {
 
         Instance = this;
@@ -50,27 +53,60 @@ public class InventoryManager : MonoBehaviour {
 
         if (ItemPickup.Instance.firstOpenInventory > 0) {
 
-            if (inventory.transform.Find("ItemName").GetComponent<Text>().text == "Key") {
+            if (remoteControlExist) {
 
-                equipped.SetCell(inventory.ItemName.text, inventory.ItemIcon.sprite);
+                if (inventory.transform.Find("ItemName").GetComponent<Text>().text == "RemoteControl") {
 
-                keyObjectInstance = Instantiate(keyObject, Player.Instance.keyObjectHoldPoint);
+                    equipped.SetCell(inventory.ItemName.text, inventory.ItemIcon.sprite);
 
-                keyObjectInstance.transform.localPosition = new Vector3(0f, 0f, 0.05f);
-                keyObjectInstance.transform.localRotation = Quaternion.Euler(180f, 160f, 80f);
-                keyObjectInstance.transform.localScale = new Vector3(5f, 5f, 5f);
+                    remoteControlInstance = Instantiate(remoteControlObjectInventory, Player.Instance.objectHoldPoint);
+
+                    remoteControlInstance.transform.localPosition = new Vector3(0f, 0f, 0.05f);
+                    remoteControlInstance.transform.localRotation = Quaternion.Euler(180f, 160f, 80f);
+                    remoteControlInstance.transform.localScale = new Vector3(-0.06f, -0.06f, -0.06f);
 
 
-                inventory.SetCell(null, null);
+                    inventory.SetCell(null, null);
+
+                } else {
+
+                    Destroy(remoteControlInstance);
+
+                    inventory.SetCell(equipped.ItemName.text, equipped.ItemIcon.sprite);
+                    equipped.SetCell(null, null);
+
+                }
 
             } else {
 
-                Destroy(keyObjectInstance);
+                if (inventory.transform.Find("ItemName").GetComponent<Text>().text == "Key") {
 
-                inventory.SetCell(equipped.ItemName.text, equipped.ItemIcon.sprite);
-                equipped.SetCell(null, null);
+                    equipped.SetCell(inventory.ItemName.text, inventory.ItemIcon.sprite);
+
+                    keyObjectInstance = Instantiate(keyObject, Player.Instance.objectHoldPoint);
+
+                    keyObjectInstance.transform.localPosition = new Vector3(0f, 0f, 0.05f);
+                    keyObjectInstance.transform.localRotation = Quaternion.Euler(180f, 160f, 80f);
+                    keyObjectInstance.transform.localScale = new Vector3(5f, 5f, 5f);
+
+
+                    inventory.SetCell(null, null);
+
+                } else {
+
+                    Destroy(keyObjectInstance);
+
+                    inventory.SetCell(equipped.ItemName.text, equipped.ItemIcon.sprite);
+                    equipped.SetCell(null, null);
+
+                }
 
             }
+
+           
+
+
+            
 
         }
 

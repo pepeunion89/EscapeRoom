@@ -1,9 +1,6 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Controls;
 
 //To handle the movement and interactions with Unity, remember installing the InputSystem from PackageManager
 
@@ -11,6 +8,8 @@ public class GameInput : MonoBehaviour {
 
     //public event EventHandler OnInteractAction;
     public event Action<InputAction.CallbackContext> OnInteractAction;
+    public event Action<InputAction.CallbackContext> OnEscAction;
+    public event Action<InputAction.CallbackContext> OnInventory_performed;
     public event Action<InputAction.CallbackContext> OnJumpAction;
     public event Action<InputAction.CallbackContext> OnRunAction;
 
@@ -22,10 +21,24 @@ public class GameInput : MonoBehaviour {
         playerInputActions.Player.Enable();
 
         playerInputActions.Player.Interact.performed += Interact_performed;
+        playerInputActions.Player.Inventory.performed += Inventory_performed;
+        playerInputActions.Player.Escape.performed += Escape_performed;
         playerInputActions.Player.Run.performed += Run_performed;
         playerInputActions.Player.Jump.performed += Jump_performed;
 
     }
+
+    private void OnDestroy() {
+        playerInputActions.Player.Interact.performed -= Interact_performed;
+        playerInputActions.Player.Inventory.performed -= Inventory_performed;
+        playerInputActions.Player.Escape.performed -= Escape_performed;
+        playerInputActions.Player.Run.performed -= Run_performed;
+        playerInputActions.Player.Jump.performed -= Jump_performed;
+
+        playerInputActions.Dispose();
+
+    }
+
 
     private void Jump_performed(InputAction.CallbackContext context) {
         OnJumpAction?.Invoke(context);
@@ -42,6 +55,17 @@ public class GameInput : MonoBehaviour {
         OnInteractAction?.Invoke(context);
 
     }
+    private void Inventory_performed(InputAction.CallbackContext context) {
+
+        OnInventory_performed?.Invoke(context); 
+
+    }
+
+    private void Escape_performed(InputAction.CallbackContext context) {
+        OnEscAction?.Invoke(context);
+    }
+
+
 
 
     public Vector2 GetMovementVectorNormalized() {
@@ -69,5 +93,6 @@ public class GameInput : MonoBehaviour {
 
         return returnValue;
     }
+
 
 }

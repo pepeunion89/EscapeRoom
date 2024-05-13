@@ -12,7 +12,7 @@ public class InteractableObject : MonoBehaviour {
     [SerializeField] private int messageIndex;
     public void Interact(InteractableObject interactable, InputAction.CallbackContext context) {
 
-        if (messages!=null && messageIndex>=0 && messageIndex<messages.messages.Count && context.control.displayName == "E") {
+        if (messages!=null && messageIndex>=0 && messageIndex<messages.messages.Count) {
             
             string message = messages.messages[messageIndex];
 
@@ -27,25 +27,26 @@ public class InteractableObject : MonoBehaviour {
 
         if (interactable.gameObject.name == "Note") {
 
-            switch (context.control.displayName) {
-                case "E":
                     Inventory.Instance.Hide();
                     NoteSelected.Instance.ShowNote();
-                    break;
-                case "Esc":
-                    NoteSelected.Instance.HideNote();
-                    break;
-                default:
-                    break;
-            }            
 
         }
 
         if(interactable.gameObject.name == "PictureRedHot") {
-
-            ItemPickup.Instance.Pickup();
+            // esto se activa cuando ya esta encendido el televisor, sino no.
+            if(TVScript.Instance.tv.activeSelf) {
+                ItemPickup.Instance.Pickup("Key");
+            }
 
         }
+
+        if(interactable.gameObject.name == "RemoteControlContainer") {
+
+            ItemPickup.Instance.Pickup("RemoteControl");
+
+        }
+
+        // Door and TV interact functionality -------------------------------------------------------------
 
         if (interactable.gameObject.name == "Door") {
 
@@ -80,6 +81,28 @@ public class InteractableObject : MonoBehaviour {
 
                 //You dont have the key
                 
+            }
+
+        }
+
+        if (interactable.gameObject.name == "TVRack") {
+
+            if (InventoryManager.Instance.equipped.transform.Find("ItemName").GetComponent<Text>().text == "RemoteControl") {
+
+                TVScript.Instance.turnOnTV();
+
+                InventoryManager.Instance.equipped.SetCell(null, null);
+
+                InventoryManager.Instance.remoteControlExist = false;
+
+                Destroy(InventoryManager.Instance.remoteControlInstance);
+
+                ItemPickup.Instance.firstOpenInventory = 0;
+
+            } else {
+
+                //You dont have the Remote Control
+
             }
 
         }
