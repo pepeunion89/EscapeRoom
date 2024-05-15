@@ -12,12 +12,13 @@ public class ItemPickup : MonoBehaviour{
     [SerializeField] public Transform keyTransform;
     [SerializeField] public Transform remoteControlTransform;
     public bool keyExists = true;
+    public bool remoteExists = true;
 
     // Remember to set instance = this to avoid getting a NullReference error.
     private void Awake() {
         Instance = this;
     }
-    public void Pickup(string itemName) {
+    public void Pickup(string itemName, GameObject picture=null, Material materialPicture=null) {
 
         switch (itemName) {
 
@@ -26,24 +27,21 @@ public class ItemPickup : MonoBehaviour{
                 if (remoteControlTransform != null) {
                     firstOpenInventory = 1;
                     InventoryManager.Instance.AddItem(remoteControlItem);
-                    Destroy(remoteControlTransform.gameObject);
+                    remoteExists = false;
                 }
 
                 break;
 
             case "Key":
 
-                Debug.Log("Entro en pickup Key");
-
                 if (keyTransform != null) {
 
-                    Debug.Log("La llave existe aun");
-
                     firstOpenInventory = 1;
+                    picture.GetComponent<MeshRenderer>().materials[1].CopyPropertiesFromMaterial(materialPicture);
                     InventoryManager.Instance.AddItem(keyItem);
                     Destroy(keyTransform.gameObject);
                 } else {
-                    Debug.Log("No existe la llave ");
+                    // The key doesn't exists 
                 }
 
                 break;

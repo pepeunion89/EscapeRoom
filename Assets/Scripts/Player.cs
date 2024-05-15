@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI; 
@@ -47,6 +48,7 @@ public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParen
     private bool isJumping;
 
     private bool canJump = true;
+    private bool waitingForAMessage = false;
 
 
     private void Awake() {        
@@ -75,6 +77,8 @@ public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParen
         gameInput.OnInventory_performed += GameInput_OnInventoryAction;
     }
 
+    
+
     private void GameInput_OnJumpAction(InputAction.CallbackContext obj) {
 
         if (canJump) StartCoroutine(JumpAndWait());
@@ -99,6 +103,12 @@ public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParen
     }
 
     private void Update() {
+
+        if(Time.timeScale == 1f) {
+            Cursor.visible = false;
+        } else {
+            Cursor.visible = true;
+        }
 
         HandleMovement();
         HandleInteractions();
@@ -160,51 +170,57 @@ public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParen
 
     // Method to HANDLE PLAYER MOVEMENT --------------------------------------------------------------------------------------------------
     public void HandleMovement() {
-        // Determinar la velocidad en base al estado de ejecución
-        if (gameInput.IsRunning()) {
-            moveSpeed = runningSpeed;
+
+        if (waitingForAMessage==false){
+            if (gameInput.IsRunning()) {
+                moveSpeed = runningSpeed;
+            } else {
+                moveSpeed = 2f;
+            }
+
+            Vector2 inputVector = gameInput.GetMovementVectorNormalized();
+
+            Vector3 forward = cameraTransform.forward;
+            Vector3 right = cameraTransform.right;
+
+            forward.y = 0f;
+            right.y = 0f;
+
+            forward.Normalize();
+            right.Normalize();
+
+            Vector3 moveDir = (forward * inputVector.y) + (right * inputVector.x);
+
+            float moveDistance = moveSpeed * Time.deltaTime;
+
+            float playerRadius = .15f;
+            float playerHeight = 2f;
+
+            bool canMove = !Physics.CapsuleCast(
+                transform.position,
+                transform.position + Vector3.up * playerHeight,
+                playerRadius,
+                moveDir,
+                moveDistance
+            );
+
+            if (canMove) {
+
+                transform.position += moveDir * moveDistance;
+
+                transform.forward = Vector3.Slerp(transform.forward, moveDir, Time.deltaTime * rotationSpeed);
+            }
+
+            isWalking = moveDir != Vector3.zero;
+            SetWalking(isWalking);
+
+            isRunning = gameInput.IsRunning();
+            SetRunning(isRunning);
         } else {
-            moveSpeed = 2f;
-        }
-       
-        Vector2 inputVector = gameInput.GetMovementVectorNormalized();
-
-        Vector3 forward = cameraTransform.forward;
-        Vector3 right = cameraTransform.right;
-
-        forward.y = 0f;
-        right.y = 0f;
-
-        forward.Normalize();
-        right.Normalize();
-
-        Vector3 moveDir = (forward * inputVector.y) + (right * inputVector.x);
-
-        float moveDistance = moveSpeed * Time.deltaTime;
-
-        float playerRadius = .15f;
-        float playerHeight = 2f;
-
-        bool canMove = !Physics.CapsuleCast(
-            transform.position,
-            transform.position + Vector3.up * playerHeight,
-            playerRadius,
-            moveDir,
-            moveDistance
-        );
-
-        if (canMove) {
-
-            transform.position += moveDir * moveDistance;
-
-            transform.forward = Vector3.Slerp(transform.forward, moveDir, Time.deltaTime * rotationSpeed);
+            // Waiting to stop showing message
         }
 
-        isWalking = moveDir != Vector3.zero;
-        SetWalking(isWalking);
-
-        isRunning = gameInput.IsRunning();
-        SetRunning(isRunning);
+        
     }
 
     // Method to HANDLE PLAYER INTERACTIONS --------------------------------------------------------------------------------------------------
@@ -260,9 +276,13 @@ public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParen
         });
     }
 
-    public IEnumerator ShowBoxMessage(string message, int messageID) {
+    public IEnumerator ShowBoxMessage(string message, int messageID, InteractableObject interactable, GameObject redHotImage = null, Material redHotMaterial = null) {
 
         if (boxMessage != null) {
+            if (messageID == 2) {
+                waitingForAMessage = true; 
+            }
+
             boxMessage.gameObject.SetActive(true);
             textMessage.text = message;
 
@@ -272,12 +292,31 @@ public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParen
 
             if(messageID == 2 &&  ItemPickup.Instance.keyExists && TVScript.Instance.tv.activeSelf) {
 
+                // First we broke de picture
                 boxMessage.gameObject.SetActive(true);
                 textMessage.text = "Sorry guys, I need to see inside you";
                 ItemPickup.Instance.keyExists = false;
                 yield return new WaitForSeconds(3f);
-                ItemPickup.Instance.Pickup("Key");
+
+                // Now we pick the key
+                ItemPickup.Instance.Pickup("Key", redHotImage, redHotMaterial);
                 boxMessage.gameObject.SetActive(false);
+
+                // Now we shot the message saying that we have the key
+                boxMessage.gameObject.SetActive(true);
+                textMessage.text = "I take the key!";
+                yield return new WaitForSeconds(2.5f);
+                boxMessage.gameObject.SetActive(false);
+                waitingForAMessage = false;
+            }
+
+            if(waitingForAMessage == true) {
+                waitingForAMessage = false;
+            }
+
+
+            if (messageID == 7) {
+                Destroy(interactable.gameObject);
             }
 
             textMessage.text = "";
@@ -290,7 +329,6 @@ public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParen
     public void HideBoxMessage() {
         boxMessage.gameObject.SetActive(false);
     }
-
 
     // Interface KEY
     public Transform GetKeyObjectFollowTransform() {

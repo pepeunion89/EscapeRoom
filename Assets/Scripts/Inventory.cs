@@ -17,10 +17,12 @@ public class Inventory : MonoBehaviour {
 
     public void Show() {
         inventoryBody.SetActive(true);
+        Time.timeScale = 0f;
     }
 
     public void Hide() {
         inventoryBody.SetActive(false);
+        Time.timeScale = 1f;
     }
 
     /// <summary>

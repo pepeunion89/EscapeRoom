@@ -23,14 +23,14 @@ public class NoteSelected : MonoBehaviour{
             noteReaded = true;
 
             BookcaseScript.Instance.resizeBookcase();
-            
-            //TVScript.Instance.turnOnTV();
         }
         visualGameObjectNote.SetActive(true);
+        Time.timeScale = 0f;
     }
 
     public void HideNote() {
         visualGameObjectNote.SetActive(false);
+        Time.timeScale = 1f;
     }
 
 

@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   messages:
   - '"This door is closed... I think I need a key"'
-  - '"A note?..."'
+  - '"Two chairs, one guy... hmm"'
   - '"The Red Hot Chilli Peppers... cool band"'
   - '"A picture of the Avengers?... DC is better"'
   - ' "I think I should be careful, that''s on fire"'
   - '"I don''t drink, thanks"'
   - '"That''s a lot of books"'
   - '"I found a TV remote control!"'
-  - '"A TV. I don''t see the Remote Control"'
+  - '"I don''t see the TV remote control"'

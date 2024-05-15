@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class RemoteControl : MonoBehaviour {
 
+    public static RemoteControl Instance { get; private set; }
+
     [SerializeField] private ItemSO remoteControlSO;
 
     private IRemoteControlObjectParent remoteControlObjectParent;

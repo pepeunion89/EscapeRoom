@@ -10,13 +10,23 @@ public class InteractableObject : MonoBehaviour {
 
     [SerializeField] private InteractableMessages messages;
     [SerializeField] private int messageIndex;
+    public GameObject redHotImage;
+    public Material redHotMaterialBroken;
     public void Interact(InteractableObject interactable, InputAction.CallbackContext context) {
 
         if (messages!=null && messageIndex>=0 && messageIndex<messages.messages.Count) {
             
             string message = messages.messages[messageIndex];
 
-            StartCoroutine(Player.Instance.ShowBoxMessage(message, messageIndex));                      
+            if (ItemPickup.Instance.remoteExists==false && interactable.gameObject.name == "TVRack") {
+                message = "The TV can work now";
+            }
+
+            if(!ItemPickup.Instance.keyExists && interactable.gameObject.name == "Door") {
+                message = "I have the key now!";
+            }
+
+            StartCoroutine(Player.Instance.ShowBoxMessage(message, messageIndex, interactable, redHotImage, redHotMaterialBroken));                      
             
 
         } else {
@@ -29,14 +39,6 @@ public class InteractableObject : MonoBehaviour {
 
                     Inventory.Instance.Hide();
                     NoteSelected.Instance.ShowNote();
-
-        }
-
-        if(interactable.gameObject.name == "PictureRedHot") {
-            // esto se activa cuando ya esta encendido el televisor, sino no.
-            if(TVScript.Instance.tv.activeSelf) {
-                ItemPickup.Instance.Pickup("Key");
-            }
 
         }
 
