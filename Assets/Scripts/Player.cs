@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI; 
 
-public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParent {
+public class Player : MonoBehaviour {
 
     public static Player Instance { get; private set; }
 
@@ -27,10 +27,6 @@ public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParen
 
     [SerializeField] private float runningSpeed = 5f;
     [SerializeField] private float rotationSpeed = 10f;
-
-
-    private KeyObject keyObject;
-    private RemoteControl remoteControlObject;
 
     private Animator animator;
 
@@ -58,8 +54,6 @@ public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParen
         }
         Instance = this;
 
-        boyTransform = transform.Find("Remy");
-
         if (boyTransform != null) {
             animator = boyTransform.GetComponent<Animator>();
         }
@@ -77,34 +71,9 @@ public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParen
         gameInput.OnInventory_performed += GameInput_OnInventoryAction;
     }
 
-    
-
-    private void GameInput_OnJumpAction(InputAction.CallbackContext obj) {
-
-        if (canJump) StartCoroutine(JumpAndWait());
-
-    }
-
-    private IEnumerator JumpAndWait() {
-
-        isJumping = true;
-        animator.SetBool(Constants.AnimParamaters.IsJumping, isJumping);
-        canJump = false;
-
-        rigidBody.velocity = transform.up * jumpStrength;
-
-        yield return new WaitForSecondsRealtime(0.4f);
-
-        isJumping = false;
-        animator.SetBool(Constants.AnimParamaters.IsJumping, isJumping);
-        canJump = true;
-
-
-    }
-
     private void Update() {
 
-        if(Time.timeScale == 1f) {
+        if (Time.timeScale == 1f) {
             Cursor.visible = false;
         } else {
             Cursor.visible = true;
@@ -114,6 +83,15 @@ public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParen
         HandleInteractions();
 
     }
+
+
+
+    private void GameInput_OnJumpAction(InputAction.CallbackContext obj) {
+
+        if (canJump) StartCoroutine(JumpAndWait());
+
+    }    
+    
 
     private void GameInput_OnInteractAction(InputAction.CallbackContext context) {
 
@@ -149,23 +127,7 @@ public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParen
 
             }
         
-    }
-
-    public void SetWalking(bool isWalking) {
-
-        if (animator != null) {
-            animator.SetBool(Constants.AnimParamaters.IsWalking, isWalking); 
-        }
-
-    }
-
-    public void SetRunning(bool isRunning) {
-
-        if (animator != null) {
-            animator.SetBool(Constants.AnimParamaters.IsRunning, isRunning);
-        }
-
-    }
+    }   
 
 
     // Method to HANDLE PLAYER MOVEMENT --------------------------------------------------------------------------------------------------
@@ -223,6 +185,44 @@ public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParen
         
     }
 
+    private IEnumerator JumpAndWait() {
+
+        isJumping = true;
+        animator.SetBool(Constants.AnimParamaters.IsJumping, isJumping);
+        canJump = false;
+
+        rigidBody.velocity = transform.up * jumpStrength;
+
+        yield return new WaitForSecondsRealtime(0.4f);
+
+        isJumping = false;
+        animator.SetBool(Constants.AnimParamaters.IsJumping, isJumping);
+        canJump = true;
+
+
+    }
+
+
+    public void SetWalking(bool isWalking) {
+
+        if (animator != null) {
+            animator.SetBool(Constants.AnimParamaters.IsWalking, isWalking);
+        }
+
+    }
+
+    public void SetRunning(bool isRunning) {
+
+        if (animator != null) {
+            animator.SetBool(Constants.AnimParamaters.IsRunning, isRunning);
+        }
+
+    }
+
+    public bool IsWalking() {
+        return isWalking;
+    }
+
     // Method to HANDLE PLAYER INTERACTIONS --------------------------------------------------------------------------------------------------
 
     private void HandleInteractions() {
@@ -261,11 +261,7 @@ public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParen
         }
 
 
-    }
-
-    public bool IsWalking() {
-        return isWalking;
-    }
+    }    
 
     private void SetSelectedInteractable(InteractableObject interactableObject) {
         this.selectedInteractable = interactableObject;
@@ -330,48 +326,6 @@ public class Player : MonoBehaviour, IKeyObjectParent, IRemoteControlObjectParen
         boxMessage.gameObject.SetActive(false);
     }
 
-    // Interface KEY
-    public Transform GetKeyObjectFollowTransform() {
-        return objectHoldPoint;
-    }
-
-    public void SetKeyObject(KeyObject keyObject) {
-        this.keyObject = keyObject;
-    }
-
-    public KeyObject GetKeyObject() {
-        return keyObject;
-    }
-
-    public bool HasKeyObject() {
-        return keyObject != null;
-    }
-
-    public void ClearKeyObject() {
-        keyObject = null;
-    }
-
-    // Interface REMOTE CONTROL
-    public Transform GetRemoteControlObjectFollowTransform() {
-        return objectHoldPoint;
-    }
-
-    public void SetRemoteControlObject(RemoteControl remoteControlObject) {
-        this.remoteControlObject = remoteControlObject;
-    }
-
-    public RemoteControl GetRemoteControlObject() {
-        return remoteControlObject;
-    }
-
-
-    public bool HasRemoteControlObject() {
-        return remoteControlObject != null;
-    }
-
-    public void ClearRemoteControlObject() {
-        remoteControlObject = null;
-    }
 
 
 }

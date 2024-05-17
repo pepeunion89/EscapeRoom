@@ -9874,6 +9874,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Remy
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: bcdc11b2d3ab6fb4c9fc8949de634205, type: 3}
+      propertyPath: m_TagString
+      value: Player
+      objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: bcdc11b2d3ab6fb4c9fc8949de634205, type: 3}
       propertyPath: m_Controller
       value: 
@@ -17067,7 +17071,7 @@ MonoBehaviour:
   cameraTransform: {fileID: 815091995}
   runningSpeed: 5
   rotationSpeed: 10
-  boyTransform: {fileID: 0}
+  boyTransform: {fileID: 577699334}
   rigidBody: {fileID: 1379806505}
   jumpStrength: 2
 --- !u!54 &1379806505
